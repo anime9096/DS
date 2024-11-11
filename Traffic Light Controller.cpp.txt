@@ -1,0 +1,92 @@
+TRAFFIC LIGHT CONTROLLER CODE::
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity TrafficLightController is
+    Port (
+        clk : in STD_LOGIC;  -- Clock signal
+        reset : in STD_LOGIC;  -- Reset signal
+        vehicle_side_street : in STD_LOGIC;  -- Vehicle presence on the side street
+        main_street_light : out STD_LOGIC_VECTOR(2 downto 0);  -- 3-bit light signal for main street
+        side_street_light : out STD_LOGIC_VECTOR(2 downto 0)  -- 3-bit light signal for side street
+    );
+end TrafficLightController;
+
+architecture Behavioral of TrafficLightController is
+    type State_Type is (MAIN_GREEN, MAIN_YELLOW, SIDE_GREEN, SIDE_YELLOW);
+    signal State, NextState : State_Type;
+    signal Counter : INTEGER range 0 to 25000000;  -- Counter for timing
+
+    constant GREEN_TIME : INTEGER := 25000000;  -- 25 seconds
+    constant YELLOW_TIME : INTEGER := 4000000;  -- 4 seconds
+
+begin
+    process(clk, reset)
+    begin
+        if reset = '1' then
+            State <= MAIN_GREEN;
+            Counter <= 0;
+        elsif rising_edge(clk) then
+            if Counter < GREEN_TIME then
+                Counter <= Counter + 1;
+            else
+                Counter <= 0;
+                State <= NextState;
+            end if;
+        end if;
+    end process;
+
+    process(State, vehicle_side_street, Counter)
+    begin
+        case State is
+            when MAIN_GREEN =>
+                main_street_light <= "001";  -- Green light for main street
+                side_street_light <= "100";  -- Red light for side street
+                if Counter = GREEN_TIME and vehicle_side_street = '1' then
+                    NextState <= MAIN_YELLOW;
+                else
+                    NextState <= MAIN_GREEN;
+                end if;
+            
+            when MAIN_YELLOW =>
+                main_street_light <= "010";  -- Yellow light for main street
+                side_street_light <= "100";  -- Red light for side street
+                if Counter = YELLOW_TIME then
+                    NextState <= SIDE_GREEN;
+                else
+                    NextState <= MAIN_YELLOW;
+                end if;
+            
+            when SIDE_GREEN =>
+                main_street_light <= "100";  -- Red light for main street
+                side_street_light <= "001";  -- Green light for side street
+                if Counter = GREEN_TIME then
+                    NextState <= SIDE_YELLOW;
+                else
+                    NextState <= SIDE_GREEN;
+                end if;
+            
+            when SIDE_YELLOW =>
+                main_street_light <= "100";  -- Red light for main street
+                side_street_light <= "010";  -- Yellow light for side street
+                if Counter = YELLOW_TIME then
+                    NextState <= MAIN_GREEN;
+                else
+                    NextState <= SIDE_YELLOW;
+                end if;
+            
+            when others =>
+                NextState <= MAIN_GREEN;  -- Default state
+        end case;
+    end process;
+end Behavioral;
+
+OUTPUT::
+
+
+ 
+ 
+

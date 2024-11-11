@@ -1,0 +1,52 @@
+Parking System:-
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity ParkingSystem is
+    Port (
+        clk : in STD_LOGIC;
+        reset : in STD_LOGIC;
+        entrance_sensor : in STD_LOGIC;
+        exit_sensor : in STD_LOGIC;
+        gate_open : out STD_LOGIC;
+        parking_full : out STD_LOGIC
+    );
+end ParkingSystem;
+
+architecture Behavioral of ParkingSystem is
+    signal car_count : INTEGER := 0;
+    constant max_capacity : INTEGER := 10;  -- Maximum parking capacity
+begin
+
+process(clk, reset)
+begin
+    if reset = '1' then
+        car_count <= 0;  -- Reset the counter
+    elsif rising_edge(clk) then
+        if entrance_sensor = '1' then
+            -- Car entered the parking lot
+            if car_count < max_capacity then
+                car_count <= car_count + 1;
+            end if;
+        elsif exit_sensor = '1' then
+            -- Car exited the parking lot
+            if car_count > 0 then
+                car_count <= car_count - 1;
+            end if;
+        end if;
+    end if;
+end process;
+
+-- Gate control logic
+gate_open <= '1' when car_count < max_capacity else '0';
+parking_full <= '1' when car_count = max_capacity else '0';
+
+end Behavioral;
+
+
+output:-
+
+ 

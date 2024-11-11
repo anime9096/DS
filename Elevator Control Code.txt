@@ -1,0 +1,109 @@
+ELEVATOR CONTROL CODE::
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity ElevatorControl is
+    Port (
+        clk : in STD_LOGIC;  -- Clock signal
+        reset : in STD_LOGIC;  -- Reset signal
+        floor_call : in STD_LOGIC_VECTOR(2 downto 0);  -- Floor call signal
+        floor_request : in STD_LOGIC_VECTOR(2 downto 0);  -- Floor request signal
+        floor_display : out STD_LOGIC_VECTOR(2 downto 0);  -- Current floor display
+        door_open : out STD_LOGIC  -- Signal to open the door
+    );
+end ElevatorControl;
+
+architecture Behavioral of ElevatorControl is
+    type State_Type is (IDLE, MOVE_TO_CALL, OPEN_DOORS, CLOSE_DOORS, MOVE_TO_REQUEST);
+    signal State, NextState : State_Type;
+    signal current_floor : STD_LOGIC_VECTOR(2 downto 0) := "000";  -- Current floor (initially ground floor)
+    signal TimeCounter : INTEGER := 0;  -- Counter for door open delay
+    constant FLOOR_TIME : INTEGER := 50000000;  -- Time to move between floors (assuming a 50 MHz clock)
+    constant DOOR_TIME : INTEGER := 20000000;  -- Time the door stays open
+begin
+    process(clk, reset)
+    begin
+        if reset = '1' then
+            State <= IDLE;
+            current_floor <= "000";
+            TimeCounter <= 0;
+        elsif rising_edge(clk) then
+            State <= NextState;
+            if State = OPEN_DOORS or State = CLOSE_DOORS then
+                TimeCounter <= TimeCounter + 1;
+            else
+                TimeCounter <= 0;
+            end if;
+        end if;
+    end process;
+
+    process(State, floor_call, floor_request, TimeCounter)
+    begin
+        case State is
+            when IDLE =>
+                door_open <= '0';
+                if floor_call /= "000" then
+                    NextState <= MOVE_TO_CALL;
+                else
+                    NextState <= IDLE;
+                end if;
+
+            when MOVE_TO_CALL =>
+                door_open <= '0';
+                if current_floor = floor_call then
+                    NextState <= OPEN_DOORS;
+                else
+                    if unsigned(current_floor) < unsigned(floor_call) then
+                        current_floor <= std_logic_vector(unsigned(current_floor) + 1);
+                    else
+                        current_floor <= std_logic_vector(unsigned(current_floor) - 1);
+                    end if;
+                    NextState <= MOVE_TO_CALL;
+                end if;
+
+            when OPEN_DOORS =>
+                door_open <= '1';
+                if TimeCounter >= DOOR_TIME then
+                    NextState <= CLOSE_DOORS;
+                else
+                    NextState <= OPEN_DOORS;
+                end if;
+
+            when CLOSE_DOORS =>
+                door_open <= '0';
+                if floor_request /= "000" then
+                    NextState <= MOVE_TO_REQUEST;
+                else
+                    NextState <= IDLE;
+                end if;
+
+            when MOVE_TO_REQUEST =>
+                door_open <= '0';
+                if current_floor = floor_request then
+                    NextState <= OPEN_DOORS;
+                else
+                    if unsigned(current_floor) < unsigned(floor_request) then
+                        current_floor <= std_logic_vector(unsigned(current_floor) + 1);
+                    else
+                        current_floor <= std_logic_vector(unsigned(current_floor) - 1);
+                    end if;
+                    NextState <= MOVE_TO_REQUEST;
+                end if;
+
+            when others =>
+                NextState <= IDLE;
+        end case;
+    end process;
+
+    floor_display <= current_floor;
+
+end Behavioral;
+
+
+OUTPUT::
+
+ 
+
+

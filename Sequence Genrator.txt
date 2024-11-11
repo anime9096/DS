@@ -1,0 +1,74 @@
+Sequence Generator:-
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_ARITH.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
+
+entity StepperMotorSequenceGenerator is
+    Port(
+        clk : in STD_LOGIC;
+        reset : in STD_LOGIC;
+        phi1, phi2, phi3, phi4 : out STD_LOGIC
+    );
+end StepperMotorSequenceGenerator;
+
+architecture Behavioral of StepperMotorSequenceGenerator is
+    signal counter : integer := 0;
+    signal delay_counter : integer := 0;
+   
+    constant delay_cycle : integer := 35; -- Number of clock cycles for the delay
+
+begin
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if reset = '1' then
+                counter <= 0;
+                delay_counter <= 0;
+            else
+                -- Implement the delay
+                if delay_counter < delay_cycle then
+                    delay_counter <= delay_counter + 1;
+                else
+                    delay_counter <= 0;
+                   
+                    -- Step through the sequence for stepper motor
+                    if counter = 0 then
+                        phi1 <= '1';
+                        phi2 <= '0';
+                        phi3 <= '0';
+                        phi4 <= '0';
+                    elsif counter = 1 then
+                        phi1 <= '0';
+                        phi2 <= '1';
+                        phi3 <= '0';
+                        phi4 <= '0';
+                    elsif counter = 2 then
+                        phi1 <= '0';
+                        phi2 <= '0';
+                        phi3 <= '1';
+                        phi4 <= '0';
+                    elsif counter = 3 then
+                        phi1 <= '0';
+                        phi2 <= '0';
+                        phi3 <= '0';
+                        phi4 <= '1';
+                    end if;
+
+                    -- Increment the counter for the next phase
+                    if counter = 3 then
+                        counter <= 0;
+                    else
+                        counter <= counter + 1;
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process;
+end Behavioral;
+
+output:-
+
+ 
